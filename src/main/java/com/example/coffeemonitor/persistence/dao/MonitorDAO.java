@@ -3,7 +3,6 @@ package com.example.coffeemonitor.persistence.dao;
 import com.example.coffeemonitor.persistence.util.DaoException;
 import com.example.coffeemonitor.persistence.util.DbConnectionManager;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -70,7 +69,6 @@ public class MonitorDAO {
     }
 
     public void touchHeartbeat(String code) {
-        // se non esiste il distributore nel monitor, lo creiamo in ACTIVE con location_name NULL (best-effort)
         try (Connection conn = DbConnectionManager.getConnection()) {
             conn.setAutoCommit(false);
 
@@ -83,6 +81,16 @@ public class MonitorDAO {
                                 "ON DUPLICATE KEY UPDATE last_seen=CURRENT_TIMESTAMP";
 
                 try (PreparedStatement ps = conn.prepareStatement(upsert)) {
+                    ps.setString(1, code);
+                    ps.executeUpdate();
+                }
+
+                // RECOVERY: se era FAULT e torna l'heartbeat, torna ACTIVE (a meno che non sia in MAINTENANCE)
+                String recover =
+                        "UPDATE monitor_distributors " +
+                                "SET status='ACTIVE' " +
+                                "WHERE code=? AND status='FAULT'";
+                try (PreparedStatement ps = conn.prepareStatement(recover)) {
                     ps.setString(1, code);
                     ps.executeUpdate();
                 }
@@ -117,9 +125,6 @@ public class MonitorDAO {
     }
 
     public void markFaultIfStale(int staleSeconds) {
-        // Marca FAULT se:
-        // - non è già MAINTENANCE
-        // - last_seen è NULL o troppo vecchio
         String sql =
                 "UPDATE monitor_distributors d " +
                         "LEFT JOIN distributor_heartbeats h ON h.distributor_code = d.code " +

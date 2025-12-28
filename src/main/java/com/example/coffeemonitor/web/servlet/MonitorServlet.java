@@ -13,17 +13,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * Servizio di monitoraggio (NO AUTH)
- *
- * Endpoints:
- * POST /api/monitor/distributors/create   (code, location_name, status)
- * POST /api/monitor/distributors/delete   (code)
- * POST /api/monitor/distributors/status   (code, status)
- * POST /api/monitor/heartbeat             (code)
- * POST /api/monitor/sync                  (payload JSON semplice, vedi sotto)
- * GET  /api/monitor/map
- */
 @WebServlet(urlPatterns = {
         "/api/monitor/distributors/create",
         "/api/monitor/distributors/delete",
@@ -36,14 +25,12 @@ public class MonitorServlet extends HttpServlet {
 
     private final MonitorDAO dao = new MonitorDAO();
 
-    // caching “fault calculation”
     private static volatile long lastFaultCalcMs = 0L;
-    private static final long FAULT_RECALC_WINDOW_MS = 30_000; // ricalcola max ogni 30s
-    private static final int STALE_SECONDS = 180; // 3 minuti
+    private static final long FAULT_RECALC_WINDOW_MS = 30_000;
+    private static final int STALE_SECONDS = 180;
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        // CORS libero (servizio senza auth, usabile anche da altre app)
         resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -129,7 +116,6 @@ public class MonitorServlet extends HttpServlet {
             dao.deleteDistributor(code);
             write(resp, 200, "{\"ok\":true}");
         } catch (DaoException ex) {
-            // se non trovato, non blocchiamo la sync (best-effort)
             write(resp, 200, "{\"ok\":true}");
         }
     }
@@ -152,12 +138,7 @@ public class MonitorServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Sync bulk: JSON semplice, senza librerie.
-     * Body esempio:
-     * {"items":[{"code":"D-001","location_name":"Edificio 1","status":"ACTIVE"}, ...]}
-     */
-    private void  handleSync(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    private void handleSync(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String body = req.getReader().lines().reduce("", (a,b) -> a + b);
         if (body == null || body.isBlank()) {
             write(resp, 400, "{\"ok\":false,\"message\":\"body obbligatorio\"}");
@@ -165,7 +146,6 @@ public class MonitorServlet extends HttpServlet {
         }
 
         try {
-
             List<Item> items = SimpleJsonSyncParser.parse(body);
 
             for (Item it : items) {
@@ -184,14 +164,12 @@ public class MonitorServlet extends HttpServlet {
     }
 
     private void handleMap(HttpServletResponse resp) throws IOException {
-        // ricalcolo FAULT solo ogni “finestra” per non sovraccaricare
         long now = MonitorDAO.nowMs();
         if (now - lastFaultCalcMs > FAULT_RECALC_WINDOW_MS) {
             try {
                 dao.markFaultIfStale(STALE_SECONDS);
                 lastFaultCalcMs = now;
             } catch (DaoException ex) {
-                // non blocco la mappa
                 ex.printStackTrace();
             }
         }
@@ -210,12 +188,9 @@ public class MonitorServlet extends HttpServlet {
                 json.append("{")
                         .append("\"code\":\"").append(escJson(r.code)).append("\",")
                         .append("\"location_name\":\"").append(escJson(r.locationName)).append("\",")
-                        .append("\"status\":\"").append(escJson(r.statusDb)).append("\",");
-
-                // last_seen opzionale (string)
-                json.append("\"last_seen\":\"").append(escJson(r.lastSeen == null ? "" : r.lastSeen.toString())).append("\"");
-
-                json.append("}");
+                        .append("\"status\":\"").append(escJson(r.statusDb)).append("\",")
+                        .append("\"last_seen\":\"").append(escJson(r.lastSeen == null ? "" : r.lastSeen.toString())).append("\"")
+                        .append("}");
             }
 
             json.append("]}");
@@ -227,7 +202,6 @@ public class MonitorServlet extends HttpServlet {
         }
     }
 
-    // ---------- helper DTO + parsing ----------
     public static class Item {
         public String code;
         public String locationName;
