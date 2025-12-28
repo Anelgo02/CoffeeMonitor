@@ -180,8 +180,6 @@ Risposta:
 "code": "D-001",
 "location_name": "Edificio A",
 "status": "ACTIVE",
-"latitude": null,
-"longitude": null,
 "last_seen": "2025-01-01 12:00:00"
 }
 ]
