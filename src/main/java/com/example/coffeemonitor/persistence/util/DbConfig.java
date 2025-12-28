@@ -2,7 +2,7 @@ package com.example.coffeemonitor.persistence.util;
 
 /**
  * Configurazione DB monitor.
- * Puoi sovrascrivere con variabili d'ambiente:
+ * Variabili d'ambiente:
  * MONITOR_DB_URL, MONITOR_DB_USER, MONITOR_DB_PASSWORD
  */
 public class DbConfig {
