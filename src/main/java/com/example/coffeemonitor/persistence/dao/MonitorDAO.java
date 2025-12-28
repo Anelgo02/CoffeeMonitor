@@ -85,10 +85,11 @@ public class MonitorDAO {
                     ps.executeUpdate();
                 }
 
-                // RECOVERY: se era FAULT e torna l'heartbeat, torna ACTIVE (a meno che non sia in MAINTENANCE)
+                // RECOVERY: se era FAULT e torna l'heartbeat, torna ACTIVE
+                // (MAINTENANCE resta MAINTENANCE perché non matcha status='FAULT')
                 String recover =
                         "UPDATE monitor_distributors " +
-                                "SET status='ACTIVE' " +
+                                "SET status='ACTIVE', updated_at=CURRENT_TIMESTAMP " +
                                 "WHERE code=? AND status='FAULT'";
                 try (PreparedStatement ps = conn.prepareStatement(recover)) {
                     ps.setString(1, code);
@@ -128,7 +129,7 @@ public class MonitorDAO {
         String sql =
                 "UPDATE monitor_distributors d " +
                         "LEFT JOIN distributor_heartbeats h ON h.distributor_code = d.code " +
-                        "SET d.status = 'FAULT' " +
+                        "SET d.status = 'FAULT', d.updated_at=CURRENT_TIMESTAMP " +
                         "WHERE d.status <> 'MAINTENANCE' " +
                         "AND (h.last_seen IS NULL OR h.last_seen < (CURRENT_TIMESTAMP - INTERVAL ? SECOND))";
 

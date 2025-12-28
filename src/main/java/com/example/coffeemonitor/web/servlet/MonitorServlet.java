@@ -26,8 +26,8 @@ public class MonitorServlet extends HttpServlet {
     private final MonitorDAO dao = new MonitorDAO();
 
     private static volatile long lastFaultCalcMs = 0L;
-    private static final long FAULT_RECALC_WINDOW_MS = 30_000;
-    private static final int STALE_SECONDS = 180;
+    private static final long FAULT_RECALC_WINDOW_MS = 30_000; // ricalcola max ogni 30s
+    private static final int STALE_SECONDS = 180; // 3 minuti
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
@@ -156,7 +156,6 @@ public class MonitorServlet extends HttpServlet {
             }
 
             write(resp, 200, "{\"ok\":true,\"count\":" + items.size() + "}");
-
         } catch (Exception ex) {
             ex.printStackTrace();
             write(resp, 400, "{\"ok\":false,\"message\":\"json non valido\"}");
