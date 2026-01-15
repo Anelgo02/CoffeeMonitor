@@ -66,10 +66,9 @@ Serve solo in casi particolari:
 - recovery da errori
 - verifica manuale da parte dell’amministratore
 
-In questo caso il sistema principale legge tutti i distributori dal proprio database
-e invia l’elenco completo al servizio di monitoraggio.
+In questo caso il sistema principale viene sincronizzato manualmente
+col servizio di monitoraggio (ad esempio tramite pulsante nel pannello admin).
 
-Questa operazione è manuale (ad esempio tramite pulsante nel pannello admin).
 
 ----------------------------------------------------------------
 
