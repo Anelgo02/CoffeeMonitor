@@ -15,7 +15,6 @@ utilizzato anche da applicazioni esterne (mappe, dashboard, client).
 - Server: Apache Tomcat 10.1+
 - Database: MySQL (database dedicato `coffee_monitor`)
 - Porta di default: 8081
-- Context path: /coffee-monitor
 
 Il servizio non espone interfacce grafiche.
 Espone esclusivamente endpoint HTTP per il monitoraggio.
