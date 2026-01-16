@@ -12,7 +12,7 @@ CREATE DATABASE IF NOT EXISTS coffee_monitor
 CREATE USER IF NOT EXISTS 'monitor_user'@'localhost' IDENTIFIED BY 'MonitorPass123!';
 
 -- 3) Permessi SOLO su coffee_monitor
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES
       ON coffee_monitor.* TO 'monitor_user'@'localhost';
 
 FLUSH PRIVILEGES;
